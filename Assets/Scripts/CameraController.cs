@@ -27,7 +27,6 @@ public class CameraController : MonoBehaviour
         // Perform initial movements to offset behind player.
         if (Time.time < startTime + startMovementSeconds)
         {
-            // Debug.Log("Start time: " + Time.time);
             // Distance moved equals elapsed time times speed..
             float distCovered = (Time.time - startTime) * speed;
             // Fraction of journey completed equals current distance divided by total distance.

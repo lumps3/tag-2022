@@ -6,13 +6,18 @@ using UnityEngine.SceneManagement;
 public class GameController : MonoBehaviour
 {
     public float startDelaySeconds = 2f;
+
     private PlayerController playerController;
     private List<EnemyController> enemyControllers;
-    private float startTime;
+    private HudController hudController;
+    private float lastTime;
+    private bool isGameActive;
 
     // Start is called before the first frame update
     void Start()
     {
+        hudController = GameObject.Find("HUD").GetComponent<HudController>();
+
         playerController = GameObject.FindWithTag("Player").GetComponent<PlayerController>();
         var enemies = GameObject.FindGameObjectsWithTag("Enemy");
 
@@ -22,11 +27,23 @@ public class GameController : MonoBehaviour
             enemyControllers.Add(enemy.GetComponent<EnemyController>());
         }
         SetActiveState(false);
+        hudController.ShowLevel();
         Invoke("StartLevel", 2.0f);
     }
 
+    void Update()
+    {
+        if (isGameActive) {
+            GameValues.AddToElapsedTime(lastTime, Time.time);
+            lastTime = Time.time;
+        }
+    }
+
     void StartLevel() {
+        hudController.HideLevel();
         SetActiveState(true);
+        lastTime = Time.time;
+        isGameActive = true;
     }
 
     void SetActiveState(bool isActive)
@@ -34,24 +51,36 @@ public class GameController : MonoBehaviour
         playerController.enabled = isActive;
         foreach (var enemy in enemyControllers)
         {
+            Debug.Log("activitating enemy: " + enemy);
             enemy.enabled = isActive;
         }
     }
 
     public void PlayerDead()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        GameValues.lives = GameValues.lives - 1;
+        if (GameValues.lives == 0) 
+        {
+            GameValues.lastResult = LastResult.Lost;
+            SceneManager.LoadScene("End");
+        }
+        else
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
     }
 
     public void PlayerWon()
     {
-        if (SceneManager.GetActiveScene().name == "Level1")
+        if (GameValues.level == 5)
         {
-            SceneManager.LoadScene("Level2");
+            GameValues.lastResult = LastResult.Won;
+            SceneManager.LoadScene("End");
         }
         else
         {
-            SceneManager.LoadScene("Level1");
+            GameValues.level = GameValues.level + 1;
+            SceneManager.LoadScene("Level" + GameValues.level);
         }
     }
 }
